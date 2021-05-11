@@ -1,0 +1,25 @@
+{
+  "name": "toevla-email-login-service",
+  "version": "0.0.1",
+  "description": "Allow logging in by email for toegankelijk.vlaanderen.be",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lblod/toevla-email-login-service.git"
+  },
+  "keywords": [
+    "mu-service"
+  ],
+  "author": "Aad Versteden",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lblod/toevla-email-login-service/issues"
+  },
+  "homepage": "https://github.com/lblod/toevla-email-login-service#readme",
+  "dependencies": {
+    "@lblod/mu-auth-sudo": "^0.2.0"
+  }
+}
