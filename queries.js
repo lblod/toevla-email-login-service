@@ -5,7 +5,7 @@ class AccountNotFoundError extends Error {
   constructor(email, key) {
     if (email && key)
       super(`Account could not be found for ${email}.`);
-    if (!email && key)
+    if (email && !key)
       super(`Account could not be found for email ${email} and key ${key}.`);
     if (!email && !key)
       super(`Account could not be found`);
