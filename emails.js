@@ -38,7 +38,7 @@ export async function send({ from, to, subject, message }) {
                       nmo:emailTo ${sparqlEscapeString(to)};
                       nmo:messageSubject ${sparqlEscapeString(subject)};
                       nmo:plainTextMessageContent ${sparqlEscapeString(message)};
-                      nmo:isPartOf ${sparqlEscapeString(OUTBOX_URI)}.
+                      nmo:isPartOf ${sparqlEscapeUri(OUTBOX_URI)}.
                   }
                 }`);
 }
