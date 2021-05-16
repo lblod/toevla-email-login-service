@@ -2,8 +2,20 @@ import { querySudo as query, updateSudo as update } from '@lblod/mu-auth-sudo';
 import { uuid, sparqlEscapeString, sparqlEscapeUri, sparqlEscapeDateTime } from 'mu';
 
 class AccountNotFoundError extends Error {
-  constructor(email) {
-    super(`Account could not be found for ${email}.`);
+  constructor(email, key) {
+    if (email && key)
+      super(`Account could not be found for ${email}.`);
+    if (!email && key)
+      super(`Account could not be found for email ${email} and key ${key}.`);
+    if (!email && !key)
+      super(`Account could not be found`);
+  }
+}
+
+class SessionNotFoundError extends Error {
+  constructor(session) {
+    super(`Session was not found`);
+    this.session = session;
   }
 }
 
@@ -112,18 +124,18 @@ async function syncAccountFromInter(email) {
   // ensure the account exists
   let account;
   try {
-    account = await getAccountForEmail( email );
+    account = await getAccountForEmail(email);
   } catch (e) {
-    if( e instanceof AccountNotFoundError ) {
-      account = await getAccountForEmailFromInter( email );
-      await transferCoreAccountInfoFromInter( account );
+    if (e instanceof AccountNotFoundError) {
+      account = await getAccountForEmailFromInter(email);
+      await transferCoreAccountInfoFromInter(account);
     } else {
       throw e;
     }
   }
 
   // ensure the access rights have been propagated.
-  await transferAccountRolesFromInter( account );
+  await transferAccountRolesFromInter(account);
 }
 
 /**
@@ -200,4 +212,136 @@ async function insertKeyForAccount(key, account) {
                 }`);
 }
 
-export { AccountNotFoundError, getAccountForEmail, insertKeyForAccount, syncAccountFromInter };
+/**
+ * Logs the user out of the current session.
+ *
+ * @param {string} session URI of the session to clear.
+ */
+async function logout(session) {
+  await update(`PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+                DELETE WHERE {
+                  GRAPH ?g {
+                    ${sparqlEscapeUri(session)} ?p ?o.
+                  }
+                }`);
+}
+
+/**
+ * Verifies the user can log in with the given email address and key.
+ *
+ * @param {string} email Email-address of the user.
+ * @param {string} key Key which was sent to the user.
+ */
+async function canLogin(email, key) {
+  const res =
+    await query(`PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+                 SELECT ?account
+                 WHERE {
+                   GRAPH ?account {
+                     ?account ext:email ${sparqlEscapeString(email)};
+                              ext:hasKey/ext:key ${sparqlEscapeString(key)}.
+                   }
+                 } LIMIT 1`);
+  try {
+    return !!res.results.bindings[0].account.value;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ *
+ */
+async function getAccountForEmailAndKey(email, key) {
+  const res =
+    await query(`PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+                 PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+                 SELECT ?account ?uuid
+                 WHERE {
+                   GRAPH ?account {
+                     ?account ext:email ${sparqlEscapeString(email)};
+                              mu:uuid ?uuid;
+                              ext:hasKey/ext:key ${sparqlEscapeString(key)}.
+                   }
+                 } LIMIT 1`);
+  try {
+    return {
+      account: res.results.bindings[0].account.value,
+      uuid: res.results.bindings[0].uuid.value
+    };
+  } catch (e) {
+    return new AccountNotFoundError(email, key);
+  }
+}
+
+/**
+ * Logs the user in for the given session.
+ *
+ * Note: assumes you checked the user can log in and that they are
+ * currently not logged in.
+ *
+ * @param {string} session Session to which the login should be added.
+ * @param {string} account Account through which the session will be logged in.
+ */
+async function login(session, account) {
+  await update(`PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+                PREFIX musession: <http://mu.semte.ch/vocabularies/session/>
+                PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+                INSERT DATA {
+                  GRAPH ${sparqlEscapeUri(account)} {
+                    ${sparqlEscapeUri(session)} a musession:Session;
+                      mu:uuid ${sparqlEscapeString(uuid())};
+                      ext:hasAccount ${sparqlEscapeUri(account)}.
+                  }
+                }`);
+}
+
+/**
+ * Yields the uuid of the current session.
+ *
+ * @param {string} session The session URI which we want to retrieve.
+ * @return {Promise<string>}
+ */
+async function getSessionId(session) {
+  const res =
+    await query(`PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+                 SELECT ?uuid
+                 WHERE {
+                   ${sparqlEscapeUri(session)} mu:uuid ?uuid.
+                 }
+                 LIMIT 1`);
+
+  try {
+    return res.results.bindings[0].uuid.value;
+  } catch (_e) {
+    return new SessionNotFoundError(session);
+  }
+}
+
+async function getAccountForSession(session) {
+  const res =
+    await query(`PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+                 PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+                 SELECT ?account ?uuid
+                 WHERE {
+                   GRAPH ?account {
+                     ?account mu:uuid ?uuid.
+                     ${sparqlEscapeUri(session)} ext:hasAccount ?account.
+                   }
+                 } LIMIT 1
+                 `);
+  try {
+    return {
+      account: res.results.bindings[0].account.value,
+      uuid: res.results.bindings[0].uuid.value
+    };
+  } catch (e) {
+    return new AccountNotFoundError();
+  }
+}
+
+export {
+  AccountNotFoundError, getAccountForEmail, insertKeyForAccount, syncAccountFromInter,
+  logout, canLogin, login, getAccountForEmailAndKey, transferAccountRolesFromInter,
+  getSessionId, getAccountForSession
+};
