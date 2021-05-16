@@ -5,7 +5,7 @@ const APP_BASE_URL = process.env.APP_BASE_URL; // expected to end with a '/'
 const EMAIL_SENDER = process.env.EMAIL_SENDER; // email-address from which emails will be sent out
 
 export async function sendLoginEmail(email, key) {
-  const loginLink = `${APP_BASE_URL}/email-login`
+  const loginLink = `${APP_BASE_URL}email-login`
     + `?key=${key}`
     + `&email=${encodeURIComponent(email)}`;
   const sender = EMAIL_SENDER;
