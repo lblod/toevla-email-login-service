@@ -3,6 +3,7 @@ import { uuid, sparqlEscapeUri, sparqlEscapeString } from 'mu';
 
 const APP_BASE_URL = process.env.APP_BASE_URL; // expected to end with a '/'
 const EMAIL_SENDER = process.env.EMAIL_SENDER; // email-address from which emails will be sent out
+const OUTBOX_URI = process.env.OUTBOX_URI; // url of the outbox
 
 export async function sendLoginEmail(email, key) {
   const loginLink = `${APP_BASE_URL}email-login`
@@ -37,7 +38,7 @@ export async function send({ from, to, subject, message }) {
                       nmo:emailTo ${sparqlEscapeString(to)};
                       nmo:messageSubject ${sparqlEscapeString(subject)};
                       nmo:plainTextMessageContent ${sparqlEscapeString(message)};
-                      nmo:isPartOf <http://data.lblod.info/id/mailfolder/outbox>.
+                      nmo:isPartOf ${sparqlEscapeString(OUTBOX_URI)}.
                   }
                 }`);
 }
