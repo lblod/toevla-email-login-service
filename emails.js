@@ -4,13 +4,15 @@ import { uuid, sparqlEscapeUri, sparqlEscapeString } from 'mu';
 const APP_BASE_URL = process.env.APP_BASE_URL; // expected to end with a '/'
 const EMAIL_SENDER = process.env.EMAIL_SENDER; // email-address from which emails will be sent out
 const OUTBOX_URI = process.env.OUTBOX_URI; // url of the outbox
+const EMAIL_SUBJECT_PREFIX = process.env.EMAIL_SUBJECT_PREFIX; // prefix, like [TEST] or [DEV] to add to the login link
 
 export async function sendLoginEmail(email, key) {
   const loginLink = `${APP_BASE_URL}email-login`
     + `?key=${key}`
     + `&email=${encodeURIComponent(email)}`;
   const sender = EMAIL_SENDER;
-  const subject = "[TEST] Login key toegankelijk.vlaanderen.be";
+  const subjectPrefix = EMAIL_SUBJECT_PREFIX ? `${EMAIL_SUBJECT_PREFIX} ` : "";
+  const subject = `${subjectPrefix}Login key toegankelijk.vlaanderen.be`;
   const message = `Beste,\n\nMet onderstaande link kan je inloggen op je account op toegankelijk.vlaanderen.be\n${loginLink} \n\nMet vriendelijke groeten,\nToegankelijk Vlaanderen`;
 
   await send({ from: sender, to: email, subject, message });
