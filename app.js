@@ -46,13 +46,13 @@ app.post('/login', async function(req, res) {
     // 3. get account for credentials
     const { account, uuid: accountUuid } = await getAccountForEmailAndKey(email, key);
 
-    // 3. update account roles info
+    // 4. update account roles info
     await transferAccountRolesFromInter(account);
 
-    // 4. add new login to session
+    // 5. add new login to session
     await login(sessionUri, account);
 
-    // 5. request login recalculation
+    // 6. request login recalculation
     const sessionId = await getSessionId( sessionUri );
     return res
       .header('mu-auth-allowed-groups', 'CLEAR')
