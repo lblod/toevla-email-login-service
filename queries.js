@@ -57,7 +57,8 @@ async function transferCoreAccountInfoFromInter(account) {
                       a foaf:Person;
                       foaf:account ${sparqlEscapeUri(account)};
                       foaf:firstName ?firstName;
-                      foaf:familyName ?familyName.
+                      foaf:familyName ?familyName;
+                      mu:uuid ?personUuid.
                   }
                 } WHERE {
                   GRAPH <http://data.toevla.org/inter> {
@@ -67,6 +68,7 @@ async function transferCoreAccountInfoFromInter(account) {
                       mu:uuid ?accountUuid.
                     ?person
                       foaf:account ${sparqlEscapeUri(account)};
+                      mu:uuid ?personUuid;
                       a foaf:Person.
                     OPTIONAL { ?person foaf:firstName ?firstName. }
                     OPTIONAL { ?person foaf:familyName ?familyName. }
