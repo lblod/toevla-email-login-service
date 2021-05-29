@@ -1,6 +1,6 @@
 {
   "name": "toevla-email-login-service",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Allow logging in by email for toegankelijk.vlaanderen.be",
   "main": "app.js",
   "scripts": {
